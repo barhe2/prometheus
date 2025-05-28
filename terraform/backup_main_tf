@@ -1,0 +1,104 @@
+provider "aws" {
+  region = var.region
+}
+
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+  owners = ["099720109477"] # Canonical
+}
+
+# ###resource "aws_security_group" "k8s" { old version
+resource "aws_security_group" "default" {
+  name        = "${var.cluster_name}-sg"
+  description = "Allow traffic for Kubernetes cluster"
+
+  # SSH access
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Kubernetes API
+  ingress {
+    from_port   = 6443
+    to_port     = 6443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Node port services
+  ingress {
+    from_port   = 30000
+    to_port     = 32767
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  # Allow all internal traffic
+  ingress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    self        = true
+  }
+
+  # Allow all outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.cluster_name}-sg"
+  }
+}
+
+resource "aws_instance" "control_plane" {
+  count         = var.control_plane_count
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = var.control_plane_instance_type
+  key_name      = var.key_name
+  # vpc_security_group_ids = [sg-02b3d29bdcd49a0cc]
+  vpc_security_group_ids = [aws_security_group.default.id]
+  # ##vpc_security_group_ids = [aws_security_group.k8s.id]
+
+  tags = {
+    Name = "${var.cluster_name}-control-plane"
+    Role = "control-plane"
+  }
+
+  root_block_device {
+    volume_size = 50
+  }
+}
+
+resource "aws_instance" "workers" {
+  count         = var.worker_count
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = var.worker_instance_type
+  key_name      = var.key_name
+  # vpc_security_group_ids = [sg-02b3d29bdcd49a0cc]
+  vpc_security_group_ids = [aws_security_group.default.id]
+  # ##vpc_security_group_ids = [aws_security_group.k8s.id]
+
+  tags = {
+    Name = "${var.cluster_name}-worker-${count.index + 1}"
+    Role = "worker"
+  }
+
+  root_block_device {
+    volume_size = 50
+  }
+}

@@ -1,0 +1,14 @@
+plugin: aws_ec2
+regions:
+  - us-west-2
+
+filters:
+  "instance-state-name": running,pending,initializing
+
+groups:
+  dms: "tag:group == 'dms'"
+  control: "tag:Role == 'control-plane'"
+  worker: "tag:Role == 'worker'"
+
+hostnames:
+  - tag:Name

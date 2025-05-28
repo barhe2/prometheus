@@ -1,0 +1,9 @@
+- hosts: controls
+  become: yes
+  roles:
+    - control_plane_setup
+
+- hosts: workers
+  become: yes
+  roles:
+    - worker_node_setup
