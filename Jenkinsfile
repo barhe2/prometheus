@@ -178,26 +178,6 @@ ${workerIpsMap.collect { key, value -> "        ${key}:\n          ansible_host:
             when {
                 expression { return env.MANIFEST_CHANGED }
             }
-            steps {
-                script {
-                    sh "mkdir -p enviormentSetup"
-                    sh """
-                        set -e
-                        cp ${env.TERRAFORM_DIR}/terraform.tfstate enviormentSetup/
-                        cp kubeconfig enviormentSetup/
-                    """
-                    sshagent(['github-credentials']) {
-                        sh """
-                            set -e
-                            git config --global user.email "jenkins@example.com"
-                            git config --global user.name "Jenkins"
-                            git add enviormentSetup/terraform.tfstate enviormentSetup/kubeconfig
-                            git commit -m "Add kubeconfig and terraform state for ${env.CLUSTER_NAME}"
-                            git push origin HEAD:main
-                        """
-                    }
-                }
-            }
         }
     }
 
