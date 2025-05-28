@@ -55,25 +55,22 @@ pipeline {
                         error "Manifest file '${env.MANIFEST_FILE}' not found!"
                     }
 
-                    // --- ADDED DEBUGGING STEPS ---
                     echo "Contents of ${env.MANIFEST_FILE}:"
-                    sh "cat ${env.MANIFEST_FILE}" // Print the actual content Jenkins sees
+                    sh "cat ${env.MANIFEST_FILE}"
                     echo "Attempting to parse JSON..."
-                    // --- END DEBUGGING STEPS ---
 
                     def manifest = readJSON file: env.MANIFEST_FILE
 
-                    // --- ADDED DEBUGGING STEPS ---
                     echo "Parsed manifest object keys: ${manifest.keySet()}"
                     echo "Parsed manifest control_plane: ${manifest.control_plane}"
                     echo "Parsed manifest worker_nodes: ${manifest.worker_nodes}"
-                    // --- END DEBUGGING STEPS ---
 
-                    env.CLUSTER_NAME = manifest.cluster_name
-                    env.CONTROL_PLANE_TYPE = manifest.control_plane.instance_type
-                    env.CONTROL_PLANE_COUNT = manifest.control_plane.count
-                    env.WORKER_NODE_TYPE = manifest.worker_nodes.instance_type
-                    env.WORKER_NODE_COUNT = manifest.worker_nodes.count
+                    // FIX: Explicitly cast to String for string values, and to Integer for count values
+                    env.CLUSTER_NAME = manifest.cluster_name.toString()
+                    env.CONTROL_PLANE_TYPE = manifest.control_plane.instance_type.toString()
+                    env.CONTROL_PLANE_COUNT = manifest.control_plane.count.toInteger()
+                    env.WORKER_NODE_TYPE = manifest.worker_nodes.instance_type.toString()
+                    env.WORKER_NODE_COUNT = manifest.worker_nodes.count.toInteger()
 
                     echo "==== Cluster Configuration ===="
                     echo "Cluster Name: ${env.CLUSTER_NAME}"
