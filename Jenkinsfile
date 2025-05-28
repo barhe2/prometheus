@@ -54,7 +54,21 @@ pipeline {
                     if (!fileExists(env.MANIFEST_FILE)) {
                         error "Manifest file '${env.MANIFEST_FILE}' not found!"
                     }
+
+                    // --- ADDED DEBUGGING STEPS ---
+                    echo "Contents of ${env.MANIFEST_FILE}:"
+                    sh "cat ${env.MANIFEST_FILE}" // Print the actual content Jenkins sees
+                    echo "Attempting to parse JSON..."
+                    // --- END DEBUGGING STEPS ---
+
                     def manifest = readJSON file: env.MANIFEST_FILE
+
+                    // --- ADDED DEBUGGING STEPS ---
+                    echo "Parsed manifest object keys: ${manifest.keySet()}"
+                    echo "Parsed manifest control_plane: ${manifest.control_plane}"
+                    echo "Parsed manifest worker_nodes: ${manifest.worker_nodes}"
+                    // --- END DEBUGGING STEPS ---
+
                     env.CLUSTER_NAME = manifest.cluster_name
                     env.CONTROL_PLANE_TYPE = manifest.control_plane.instance_type
                     env.CONTROL_PLANE_COUNT = manifest.control_plane.count
